@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f0f0f;
+  --bg2: #161616;
+  --bg3: #1e1e1e;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text: #e8e8e8;
+  --text2: #888;
+  --text3: #555;
+  --accent: #c8ff00;
+  --accent2: #ff6b35;
+  --warn: #ffaa00;
+  --danger: #ff4444;
+  --success: #00cc88;
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'IBM Plex Sans', sans-serif;
+  --r: 4px;
+  --r2: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; line-height: 1.6; min-height: 100vh; }
+
+/* Layout */
+.app { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+.sidebar { background: var(--bg2); border-right: 1px solid var(--border); padding: 24px 0; display: flex; flex-direction: column; }
+.main { display: flex; flex-direction: column; }
+
+/* Sidebar */
+.logo { padding: 0 20px 24px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+.logo-text { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--accent); letter-spacing: .08em; }
+.logo-sub { font-size: 11px; color: var(--text3); margin-top: 2px; font-family: var(--mono); }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 20px; cursor: pointer; font-size: 13px; color: var(--text2); border-left: 2px solid transparent; transition: all .15s; }
+.nav-item:hover { color: var(--text); background: var(--bg3); }
+.nav-item.on { color: var(--accent); border-left-color: var(--accent); background: rgba(200,255,0,0.04); }
+.nav-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.nav-badge { margin-left: auto; font-family: var(--mono); font-size: 10px; background: var(--danger); color: #fff; padding: 1px 5px; border-radius: 99px; }
+.nav-badge.warn { background: var(--warn); }
+.sidebar-bottom { margin-top: auto; padding: 16px 20px; border-top: 1px solid var(--border); }
+.proj-names { display: flex; flex-direction: column; gap: 6px; }
+.proj-name-row { display: flex; align-items: center; gap: 8px; }
+.proj-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.dot-a { background: #4da6ff; }
+.dot-b { background: var(--success); }
+.proj-input { background: transparent; border: none; color: var(--text2); font-family: var(--mono); font-size: 11px; width: 100%; outline: none; }
+.proj-input:focus { color: var(--text); }
+.proj-input::placeholder { color: var(--text3); }
+.save-names { margin-top: 8px; width: 100%; padding: 6px; background: transparent; border: 1px solid var(--border2); border-radius: var(--r); color: var(--text2); font-family: var(--mono); font-size: 11px; cursor: pointer; transition: all .15s; }
+.save-names:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Header */
+.header { padding: 20px 28px 0; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
+.page-title { font-family: var(--mono); font-size: 13px; color: var(--text2); text-transform: uppercase; letter-spacing: .1em; }
+.header-actions { display: flex; gap: 8px; align-items: center; }
+
+/* Panels */
+.panel { display: none; padding: 24px 28px; flex: 1; }
+.panel.on { display: block; }
+
+/* Board */
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+.stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r2); padding: 14px 16px; }
+.stat-n { font-family: var(--mono); font-size: 28px; font-weight: 500; color: var(--text); line-height: 1; }
+.stat-n.danger { color: var(--danger); }
+.stat-n.warn { color: var(--warn); }
+.stat-l { font-size: 11px; color: var(--text3); margin-top: 6px; text-transform: uppercase; letter-spacing: .06em; }
+
+.section-hd { font-family: var(--mono); font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.section-hd::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+.block-item { background: var(--bg2); border: 1px solid var(--border); border-left: 3px solid var(--danger); border-radius: var(--r2); padding: 12px 14px; margin-bottom: 8px; display: flex; gap: 12px; align-items: flex-start; }
+.block-item.stale { border-left-color: var(--warn); }
+.block-body { flex: 1; min-width: 0; }
+.block-title { font-size: 13px; color: var(--text); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.block-meta { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+.block-age { font-family: var(--mono); font-size: 11px; color: var(--danger); min-width: 40px; text-align: right; padding-top: 2px; }
+
+.stream-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.stream-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r2); padding: 12px 14px; }
+.stream-name { font-family: var(--mono); font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+.stream-counts { display: flex; gap: 8px; }
+.sc { font-size: 11px; font-family: var(--mono); padding: 2px 6px; border-radius: 3px; }
+.sc-open { background: rgba(77,166,255,.12); color: #4da6ff; }
+.sc-wip { background: rgba(255,170,0,.12); color: var(--warn); }
+.sc-blocked { background: rgba(255,68,68,.12); color: var(--danger); }
+.sc-done { background: rgba(0,204,136,.12); color: var(--success); }
+.stream-stale { font-size: 11px; color: var(--warn); font-family: var(--mono); margin-top: 6px; }
+
+/* Feed */
+.feed-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label { font-family: var(--mono); font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; }
+select, input[type=text] { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r); color: var(--text); font-family: var(--sans); font-size: 13px; padding: 7px 10px; outline: none; width: 100%; transition: border .15s; }
+select:focus, input[type=text]:focus { border-color: var(--border2); }
+select option { background: var(--bg2); }
+textarea { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r2); color: var(--text); font-family: var(--sans); font-size: 13px; padding: 12px 14px; outline: none; width: 100%; resize: vertical; line-height: 1.7; transition: border .15s; }
+textarea:focus { border-color: var(--border2); }
+textarea::placeholder, input::placeholder { color: var(--text3); }
+.btn { padding: 8px 16px; border-radius: var(--r); font-family: var(--mono); font-size: 12px; cursor: pointer; border: 1px solid var(--border2); background: transparent; color: var(--text2); transition: all .15s; letter-spacing: .04em; }
+.btn:hover { color: var(--text); border-color: var(--text3); }
+.btn-accent { background: var(--accent); color: #0f0f0f; border-color: var(--accent); font-weight: 500; }
+.btn-accent:hover { background: #d4ff1a; border-color: #d4ff1a; color: #0f0f0f; }
+.btn-warn { border-color: var(--warn); color: var(--warn); }
+.btn-warn:hover { background: rgba(255,170,0,.08); }
+.feed-row { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+
+/* Log */
+.log-filters { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+.pill { padding: 4px 12px; border-radius: 99px; font-size: 12px; font-family: var(--mono); border: 1px solid var(--border); color: var(--text3); cursor: pointer; transition: all .15s; }
+.pill:hover { border-color: var(--border2); color: var(--text2); }
+.pill.on { border-color: var(--accent); color: var(--accent); background: rgba(200,255,0,.06); }
+.log-item { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r2); padding: 12px 14px; margin-bottom: 8px; }
+.log-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+.log-text { font-size: 13px; color: var(--text2); line-height: 1.6; white-space: pre-wrap; }
+.badge { padding: 2px 7px; border-radius: 3px; font-size: 10px; font-family: var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+.badge-a { background: rgba(77,166,255,.15); color: #4da6ff; }
+.badge-b { background: rgba(0,204,136,.15); color: var(--success); }
+.badge-both { background: rgba(255,170,0,.15); color: var(--warn); }
+.badge-sprint { background: rgba(200,255,0,.12); color: var(--accent); }
+.badge-pm { background: rgba(255,107,53,.15); color: var(--accent2); }
+.badge-blocker { background: rgba(255,68,68,.15); color: var(--danger); }
+.badge-decision { background: rgba(160,120,255,.15); color: #a878ff; }
+.badge-milestone { background: rgba(0,204,136,.15); color: var(--success); }
+.badge-risk { background: rgba(255,170,0,.15); color: var(--warn); }
+.badge-open { color: var(--text3); border: 1px solid var(--border); }
+.badge-wip { background: rgba(255,170,0,.12); color: var(--warn); }
+.badge-blocked { background: rgba(255,68,68,.12); color: var(--danger); }
+.badge-done { background: rgba(0,204,136,.12); color: var(--success); }
+.log-date { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-left: auto; }
+.log-actions { display: flex; gap: 6px; margin-top: 8px; }
+.btn-tiny { padding: 3px 8px; font-size: 11px; border-radius: var(--r); border: 1px solid var(--border); background: transparent; color: var(--text3); cursor: pointer; font-family: var(--mono); transition: all .15s; }
+.btn-tiny:hover { color: var(--text); border-color: var(--border2); }
+.btn-tiny.done-btn:hover { color: var(--success); border-color: var(--success); }
+.btn-tiny.del-btn:hover { color: var(--danger); border-color: var(--danger); }
+
+/* Challenge */
+.challenge-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+.challenge-out { background: var(--bg2); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: var(--r2); padding: 20px; font-size: 14px; line-height: 1.8; color: var(--text); white-space: pre-wrap; min-height: 120px; }
+.challenge-out .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 8px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Ask */
+.quick-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+.chat-area { margin-bottom: 14px; }
+.chat-u { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r2); padding: 10px 14px; margin-bottom: 8px; font-size: 13px; color: var(--text2); margin-left: 15%; }
+.chat-a { background: var(--bg2); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: var(--r2); padding: 14px 16px; margin-bottom: 8px; font-size: 14px; line-height: 1.8; color: var(--text); white-space: pre-wrap; }
+.ask-row { display: flex; gap: 8px; align-items: flex-end; }
+
+/* Report */
+.report-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
+.report-out { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r2); padding: 20px; font-size: 14px; line-height: 1.8; color: var(--text); white-space: pre-wrap; min-height: 120px; }
+
+/* API key setup */
+.setup-overlay { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: var(--bg); }
+.setup-card { background: var(--bg2); border: 1px solid var(--border2); border-radius: 12px; padding: 40px; max-width: 480px; width: 100%; }
+.setup-logo { font-family: var(--mono); font-size: 16px; color: var(--accent); margin-bottom: 8px; letter-spacing: .1em; }
+.setup-desc { font-size: 13px; color: var(--text2); line-height: 1.7; margin-bottom: 24px; }
+.setup-desc a { color: var(--accent); text-decoration: none; }
+.setup-label { font-family: var(--mono); font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; display: block; }
+.setup-input { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: var(--r); color: var(--text); font-family: var(--mono); font-size: 13px; padding: 10px 14px; outline: none; margin-bottom: 6px; }
+.setup-input:focus { border-color: var(--accent); }
+.setup-hint { font-size: 11px; color: var(--text3); margin-bottom: 20px; }
+.setup-hint a { color: var(--text2); }
+.setup-btn { width: 100%; padding: 12px; background: var(--accent); color: #0f0f0f; border: none; border-radius: var(--r); font-family: var(--mono); font-size: 13px; font-weight: 500; cursor: pointer; letter-spacing: .06em; transition: background .15s; }
+.setup-btn:hover { background: #d4ff1a; }
+.setup-warn { font-size: 11px; color: var(--text3); margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); line-height: 1.6; }
+
+.empty { color: var(--text3); font-size: 13px; font-family: var(--mono); padding: 20px 0; }
+.copy-btn { margin-top: 12px; }
+</style>
+</head>
+<body>
+
+<div id="setup-screen" class="setup-overlay" style="display:none">
+  <div class="setup-card">
+    <div class="setup-logo">PROJECT_HUB</div>
+    <p class="setup-desc">Tu asistente personal de Scrum Master / PM. Necesitas una API key de OpenAI para activar el análisis inteligente. Se guarda solo en tu navegador.</p>
+    <label class="setup-label">OpenAI API Key</label>
+    <input type="password" class="setup-input" id="key-input" placeholder="sk-...">
+    <p class="setup-hint">Consíguela en <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a> → Create new secret key.</p>
+    <button class="setup-btn" onclick="saveKey()">Activar →</button>
+    <p class="setup-warn">La clave se guarda únicamente en localStorage de tu navegador. Nunca sale de tu dispositivo salvo para llamar a la API de Anthropic directamente.</p>
+  </div>
+</div>
+
+<div id="app" class="app" style="display:none">
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-text">PROJECT_HUB</div>
+      <div class="logo-sub">powered by GPT-4o</div>
+    </div>
+    <nav>
+      <div class="nav-item on" onclick="sw('board')"><span class="nav-dot"></span>Board</div>
+      <div class="nav-item" onclick="sw('feed')"><span class="nav-dot"></span>Alimentar</div>
+      <div class="nav-item" onclick="sw('log')"><span class="nav-dot"></span>Historial</div>
+      <div class="nav-item" onclick="sw('challenge')"><span class="nav-dot"></span>Challenge <span class="nav-badge warn" id="nav-challenge-badge" style="display:none">!</span></div>
+      <div class="nav-item" onclick="sw('ask')"><span class="nav-dot"></span>Consultar</div>
+      <div class="nav-item" onclick="sw('report')"><span class="nav-dot"></span>Reporte</div>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="proj-names">
+        <div class="proj-name-row"><span class="proj-dot dot-a"></span><input class="proj-input" id="na" placeholder="Nombre proyecto A"></div>
+        <div class="proj-name-row"><span class="proj-dot dot-b"></span><input class="proj-input" id="nb" placeholder="Nombre proyecto B"></div>
+        <button class="save-names" onclick="saveNames()">guardar nombres</button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="header">
+      <div class="page-title" id="page-title">Board</div>
+      <div class="header-actions">
+        <button class="btn btn-warn" onclick="sw('challenge');runChallenge('full')">Checkin diario →</button>
+        <button class="btn" onclick="resetKey()" style="font-size:11px;padding:5px 10px">API key</button>
+      </div>
+    </div>
+
+    <div id="board" class="panel on">
+      <div class="stats">
+        <div class="stat-card"><div class="stat-n" id="s-a">0</div><div class="stat-l" id="sl-a">Items — Proyecto A</div></div>
+        <div class="stat-card"><div class="stat-n" id="s-b">0</div><div class="stat-l" id="sl-b">Items — Proyecto B</div></div>
+        <div class="stat-card"><div class="stat-n danger" id="s-block">0</div><div class="stat-l">Bloqueos activos</div></div>
+        <div class="stat-card"><div class="stat-n warn" id="s-stale">0</div><div class="stat-l">Sin update +2 días</div></div>
+      </div>
+      <div class="section-hd">Bloqueos abiertos</div>
+      <div id="board-blocks"></div>
+      <div class="section-hd" style="margin-top:20px">Streams</div>
+      <div class="stream-grid" id="board-streams"></div>
+    </div>
+
+    <div id="feed" class="panel">
+      <div class="feed-grid">
+        <div class="field"><label>Proyecto</label>
+          <select id="fp"><option value="A">Proyecto A</option><option value="B">Proyecto B</option><option value="both">Ambos</option></select></div>
+        <div class="field"><label>Stream</label>
+          <select id="fs"><option value="sprint">Sprint / story</option><option value="pm">PM / burocracia</option><option value="blocker">Bloqueo</option><option value="decision">Decisión</option><option value="milestone">Hito completado</option><option value="risk">Riesgo</option></select></div>
+        <div class="field"><label>Estado</label>
+          <select id="fst"><option value="open">Abierto</option><option value="wip">En curso</option><option value="blocked">Bloqueado</option><option value="done">Hecho</option></select></div>
+      </div>
+      <div class="field" style="margin-bottom:10px"><label>Título</label><input type="text" id="ftitle" placeholder="Resumen breve del item"></div>
+      <div class="field"><label>Contenido</label><textarea id="ftext" rows="6" placeholder="Pega aquí el correo, escribe tus notas, lo que sea. No hace falta que sea perfecto."></textarea></div>
+      <div class="feed-row">
+        <button class="btn" onclick="document.getElementById('ftext').value='';document.getElementById('ftitle').value=''">Limpiar</button>
+        <button class="btn btn-accent" onclick="addEntry()">Añadir →</button>
+      </div>
+    </div>
+
+    <div id="log" class="panel">
+      <div class="log-filters">
+        <span class="pill on" onclick="filterLog('all',this)">Todo</span>
+        <span class="pill" id="pill-a" onclick="filterLog('A',this)">Proyecto A</span>
+        <span class="pill" id="pill-b" onclick="filterLog('B',this)">Proyecto B</span>
+        <span class="pill" onclick="filterLog('blocked',this)">Bloqueados</span>
+        <span class="pill" onclick="filterLog('stale',this)">Sin update</span>
+        <span class="pill" onclick="filterLog('done',this)">Hechos</span>
+        <button class="btn" style="margin-left:auto;font-size:11px;padding:4px 10px" onclick="if(confirm('¿Borrar todo?')){entries=[];save();renderLog();updateBoard();}">Borrar todo</button>
+      </div>
+      <div id="log-list"></div>
+    </div>
+
+    <div id="challenge" class="panel">
+      <div class="challenge-btns">
+        <button class="btn" onclick="runChallenge('blockers')">Revisar bloqueos</button>
+        <button class="btn" onclick="runChallenge('stale')">Items sin update</button>
+        <button class="btn" onclick="runChallenge('inconsistencies')">Detectar inconsistencias</button>
+        <button class="btn btn-warn" onclick="runChallenge('full')">Checkin completo</button>
+      </div>
+      <div class="challenge-out" id="challenge-out"><span style="color:var(--text3);font-family:var(--mono);font-size:12px">Pulsa uno de los botones para que el asistente te haga las preguntas incómodas.</span></div>
+      <div style="margin-top:10px;display:flex;justify-content:flex-end"><button class="btn copy-btn" id="copy-challenge" style="display:none" onclick="copyEl('challenge-out','copy-challenge')">Copiar</button></div>
+    </div>
+
+    <div id="ask" class="panel">
+      <div class="quick-btns">
+        <button class="btn" onclick="qa('¿Qué está bloqueando el avance ahora mismo?')">¿Qué nos bloquea?</button>
+        <button class="btn" onclick="qa('Dame la foto completa del sprint en ambos proyectos')">Foto del sprint</button>
+        <button class="btn" onclick="qa('¿Qué tareas de PM o burocracia están pendientes?')">PM pendiente</button>
+        <button class="btn" onclick="qa('¿Qué decisiones se tomaron esta semana?')">Decisiones</button>
+        <button class="btn" onclick="qa('¿Qué riesgos tengo que escalar hoy?')">Riesgos a escalar</button>
+      </div>
+      <div class="chat-area" id="chat-hist"></div>
+      <div class="ask-row">
+        <textarea id="ask-in" rows="2" placeholder="Pregunta lo que necesites..." style="flex:1"></textarea>
+        <button class="btn btn-accent" onclick="sendQ()">Enviar →</button>
+      </div>
+    </div>
+
+    <div id="report" class="panel">
+      <div class="report-btns">
+        <button class="btn" onclick="genReport('weekly')">Reporte semanal</button>
+        <button class="btn" onclick="genReport('sprint')">Estado de sprint</button>
+        <button class="btn" onclick="genReport('exec')">Ejecutivo</button>
+        <button class="btn" onclick="genReport('risks')">Mapa de riesgos</button>
+        <button class="btn" onclick="genReport('pm')">PM pendiente</button>
+      </div>
+      <div class="report-out" id="report-out"><span style="color:var(--text3);font-family:var(--mono);font-size:12px">Selecciona un tipo de reporte.</span></div>
+      <div style="margin-top:10px;display:flex;justify-content:flex-end"><button class="btn copy-btn" id="copy-report" style="display:none" onclick="copyEl('report-out','copy-report')">Copiar</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let entries = [];
+let chatH = [];
+let names = { A: 'Proyecto A', B: 'Proyecto B' };
+let logFilter = 'all';
+
+function load() {
+  const e = localStorage.getItem('ph_entries');
+  const n = localStorage.getItem('ph_names');
+  if (e) entries = JSON.parse(e);
+  if (n) names = JSON.parse(n);
+}
+
+function save() {
+  localStorage.setItem('ph_entries', JSON.stringify(entries));
+  localStorage.setItem('ph_names', JSON.stringify(names));
+}
+
+function getKey() { return localStorage.getItem('ph_apikey') || ''; }
+function saveKey() {
+  const k = document.getElementById('key-input').value.trim();
+  if (!k.startsWith('sk-')) { alert('La key debe empezar por sk-...'); return; }
+  localStorage.setItem('ph_apikey', k);
+  init();
+}
+function resetKey() {
+  if (confirm('¿Cambiar la API key?')) {
+    localStorage.removeItem('ph_apikey');
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('setup-screen').style.display = 'flex';
+  }
+}
+
+function init() {
+  load();
+  if (!getKey()) {
+    document.getElementById('setup-screen').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+    return;
+  }
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'grid';
+  document.getElementById('na').value = names.A === 'Proyecto A' ? '' : names.A;
+  document.getElementById('nb').value = names.B === 'Proyecto B' ? '' : names.B;
+  updateBoard();
+  updateNavBadge();
+}
+
+function saveNames() {
+  const a = document.getElementById('na').value.trim();
+  const b = document.getElementById('nb').value.trim();
+  if (a) names.A = a;
+  if (b) names.B = b;
+  save();
+  document.querySelectorAll('#fp option')[0].textContent = names.A;
+  document.querySelectorAll('#fp option')[1].textContent = names.B;
+  document.getElementById('pill-a').textContent = names.A;
+  document.getElementById('pill-b').textContent = names.B;
+  document.getElementById('sl-a').textContent = 'Items — ' + names.A;
+  document.getElementById('sl-b').textContent = 'Items — ' + names.B;
+  toast('Guardado');
+  updateBoard();
+}
+
+function sw(t) {
+  const tabs = ['board','feed','log','challenge','ask','report'];
+  const titles = { board:'Board', feed:'Alimentar', log:'Historial', challenge:'Challenge', ask:'Consultar', report:'Reporte' };
+  document.querySelectorAll('.nav-item').forEach((el,i) => el.classList.toggle('on', tabs[i] === t));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+  document.getElementById(t).classList.add('on');
+  document.getElementById('page-title').textContent = titles[t];
+  if (t === 'log') renderLog();
+  if (t === 'board') updateBoard();
+}
+
+function daysSince(iso) { return Math.floor((Date.now() - new Date(iso)) / 86400000); }
+
+function addEntry() {
+  const text = document.getElementById('ftext').value.trim();
+  if (!text) return;
+  const e = {
+    id: Date.now(),
+    proj: document.getElementById('fp').value,
+    stream: document.getElementById('fs').value,
+    status: document.getElementById('fst').value,
+    title: document.getElementById('ftitle').value.trim(),
+    text,
+    date: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+  entries.push(e);
+  save();
+  document.getElementById('ftext').value = '';
+  document.getElementById('ftitle').value = '';
+  toast('Añadido');
+  updateBoard();
+  updateNavBadge();
+}
+
+function markDone(id) {
+  const e = entries.find(x => x.id === id);
+  if (e) { e.status = 'done'; e.updatedAt = new Date().toISOString(); save(); renderLog(); updateBoard(); updateNavBadge(); }
+}
+
+function deleteEntry(id) {
+  entries = entries.filter(x => x.id !== id);
+  save(); renderLog(); updateBoard(); updateNavBadge();
+}
+
+function updateNavBadge() {
+  const stale = entries.filter(e => e.status !== 'done' && daysSince(e.updatedAt) >= 2).length;
+  const blocks = entries.filter(e => e.status === 'blocked').length;
+  const badge = document.getElementById('nav-challenge-badge');
+  badge.style.display = (stale + blocks > 0) ? 'inline' : 'none';
+  badge.className = 'nav-badge' + (blocks > 0 ? '' : ' warn');
+  badge.textContent = stale + blocks;
+}
+
+function updateBoard() {
+  document.getElementById('s-a').textContent = entries.filter(e => e.proj === 'A' || e.proj === 'both').length;
+  document.getElementById('s-b').textContent = entries.filter(e => e.proj === 'B' || e.proj === 'both').length;
+  document.getElementById('s-block').textContent = entries.filter(e => e.status === 'blocked').length;
+  document.getElementById('s-stale').textContent = entries.filter(e => e.status !== 'done' && daysSince(e.updatedAt) >= 2).length;
+
+  const blocks = entries.filter(e => e.status === 'blocked');
+  const bb = document.getElementById('board-blocks');
+  if (!blocks.length) { bb.innerHTML = '<div class="empty">Sin bloqueos activos</div>'; }
+  else {
+    bb.innerHTML = blocks.map(e => {
+      const days = daysSince(e.date);
+      const pn = e.proj === 'both' ? 'Ambos' : names[e.proj];
+      return `<div class="block-item">
+        <div class="block-body">
+          <div class="block-title">${e.title || e.text.substring(0, 70)}</div>
+          <div class="block-meta"><span class="badge badge-${e.proj === 'both' ? 'both' : e.proj === 'A' ? 'a' : 'b'}">${pn}</span> &nbsp;<span class="badge badge-${e.stream}">${streamLabel(e.stream)}</span></div>
+        </div>
+        <div class="block-age">${days}d</div>
+      </div>`;
+    }).join('');
+  }
+
+  const streams = ['sprint','pm','blocker','decision','milestone','risk'];
+  const bs = document.getElementById('board-streams');
+  const cards = streams.map(s => {
+    const items = entries.filter(e => e.stream === s);
+    if (!items.length) return null;
+    const counts = { open: 0, wip: 0, blocked: 0, done: 0 };
+    items.forEach(e => { if (counts[e.status] !== undefined) counts[e.status]++; });
+    const stale = items.filter(e => e.status !== 'done' && daysSince(e.updatedAt) >= 2).length;
+    return `<div class="stream-card">
+      <div class="stream-name">${streamLabel(s)}</div>
+      <div class="stream-counts">
+        ${counts.open ? `<span class="sc sc-open">${counts.open} open</span>` : ''}
+        ${counts.wip ? `<span class="sc sc-wip">${counts.wip} wip</span>` : ''}
+        ${counts.blocked ? `<span class="sc sc-blocked">${counts.blocked} blocked</span>` : ''}
+        ${counts.done ? `<span class="sc sc-done">${counts.done} done</span>` : ''}
+      </div>
+      ${stale ? `<div class="stream-stale">${stale} sin update +2d</div>` : ''}
+    </div>`;
+  }).filter(Boolean);
+  bs.innerHTML = cards.length ? cards.join('') : '<div class="empty">Sin items aún</div>';
+}
+
+function streamLabel(s) {
+  return { sprint:'Sprint/story', pm:'PM/burocracia', blocker:'Bloqueo', decision:'Decisión', milestone:'Hito', risk:'Riesgo' }[s] || s;
+}
+
+function filterLog(f, el) {
+  logFilter = f;
+  document.querySelectorAll('.log-filters .pill').forEach(p => p.classList.remove('on'));
+  el.classList.add('on');
+  renderLog();
+}
+
+function renderLog() {
+  let filtered = [...entries].reverse();
+  if (logFilter === 'A') filtered = filtered.filter(e => e.proj === 'A' || e.proj === 'both');
+  else if (logFilter === 'B') filtered = filtered.filter(e => e.proj === 'B' || e.proj === 'both');
+  else if (logFilter === 'blocked') filtered = filtered.filter(e => e.status === 'blocked');
+  else if (logFilter === 'stale') filtered = filtered.filter(e => e.status !== 'done' && daysSince(e.updatedAt) >= 2);
+  else if (logFilter === 'done') filtered = filtered.filter(e => e.status === 'done');
+
+  const list = document.getElementById('log-list');
+  if (!filtered.length) { list.innerHTML = '<div class="empty">Sin entradas para este filtro</div>'; return; }
+
+  list.innerHTML = filtered.map(e => {
+    const d = new Date(e.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+    const pn = e.proj === 'both' ? 'Ambos' : names[e.proj];
+    const staleWarn = e.status !== 'done' && daysSince(e.updatedAt) >= 2 ? ' <span class="badge" style="background:rgba(255,170,0,.15);color:var(--warn)">+2d sin update</span>' : '';
+    return `<div class="log-item">
+      <div class="log-header">
+        <span class="badge badge-${e.proj === 'both' ? 'both' : e.proj === 'A' ? 'a' : 'b'}">${pn}</span>
+        <span class="badge badge-${e.stream}">${streamLabel(e.stream)}</span>
+        <span class="badge badge-${e.status}">${e.status}</span>
+        ${staleWarn}
+        <span class="log-date">${d}</span>
+      </div>
+      ${e.title ? `<div style="font-size:13px;font-weight:500;margin-bottom:4px;color:var(--text)">${e.title}</div>` : ''}
+      <div class="log-text">${e.text.substring(0, 300)}${e.text.length > 300 ? '…' : ''}</div>
+      <div class="log-actions">
+        ${e.status !== 'done' ? `<button class="btn-tiny done-btn" onclick="markDone(${e.id})">marcar hecho</button>` : ''}
+        <button class="btn-tiny del-btn" onclick="if(confirm('¿Borrar?'))deleteEntry(${e.id})">borrar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function buildCtx() {
+  if (!entries.length) return 'No hay entradas aún.';
+  return entries.map(e => {
+    const p = e.proj === 'both' ? 'Ambos proyectos' : names[e.proj];
+    const d = new Date(e.date).toLocaleDateString('es-ES');
+    return `[${d}][${p}][${streamLabel(e.stream)}][${e.status}][${daysSince(e.updatedAt)}d sin update]${e.title ? '\nTítulo: ' + e.title : ''}\n${e.text}`;
+  }).join('\n\n---\n\n');
+}
+
+const SYS = () => `Eres un asistente de gestión de proyectos para un Scrum Master/PM que lleva dos proyectos: "${names.A}" y "${names.B}".
+Tu rol es mantener la foto completa, detectar problemas, y hacer challenge constructivo pero directo.
+Cada entrada tiene: proyecto, stream (sprint/story o PM/burocracia), estado, y días sin actualizar.
+Responde en español. Sé directo y estructurado. Si algo lleva mucho sin update o hay inconsistencias, dilo sin rodeos.
+HISTORIAL:\n\n${buildCtx()}`;
+
+async function callAPI(prompt, sys) {
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getKey() },
+    body: JSON.stringify({ model: 'gpt-4o', max_tokens: 1200, messages: [{ role: 'system', content: sys || SYS() }, { role: 'user', content: prompt }] })
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  return data.choices?.[0]?.message?.content || '';
+}
+
+async function runChallenge(type) {
+  const out = document.getElementById('challenge-out');
+  const copyBtn = document.getElementById('copy-challenge');
+  out.innerHTML = '<span class="spinner"></span> Analizando...';
+  copyBtn.style.display = 'none';
+  const prompts = {
+    blockers: `Revisa todos los bloqueos activos. Para cada uno: cuánto tiempo lleva abierto, si hay acción pendiente clara, si hay que escalar. Sé directo y exigente.`,
+    stale: `Lista todos los items que llevan 2 o más días sin update y no están como "done". Por cada uno hazme UNA pregunta directa: ¿sigue en pie? ¿qué pasó? ¿podemos cerrarlo? Formato: item → pregunta.`,
+    inconsistencies: `Analiza el historial buscando: contradicciones (algo marcado done pero con actividad posterior), bloqueos que parecen resueltos pero siguen abiertos, decisiones que podrían afectar items en curso. Sé específico con ejemplos.`,
+    full: `Checkin diario completo. Estructura exacta:\n\n1. ATENCIÓN INMEDIATA (qué necesita acción hoy)\n2. PREGUNTAS DE SEGUIMIENTO (una pregunta directa por cada item sin update +2d)\n3. INCONSISTENCIAS (si las hay)\n4. FOTO GENERAL (estado por proyecto y stream en 2-3 líneas cada uno)\n\nSé exigente. No ignores nada sospechoso.`
+  };
+  try {
+    const r = await callAPI(prompts[type]);
+    out.textContent = r;
+    copyBtn.style.display = 'inline-block';
+  } catch(e) { out.innerHTML = `<span style="color:var(--danger)">Error: ${e.message}</span>`; }
+}
+
+async function qa(q) { document.getElementById('ask-in').value = q; sendQ(); }
+
+async function sendQ() {
+  const inp = document.getElementById('ask-in');
+  const q = inp.value.trim(); if (!q) return;
+  inp.value = '';
+  const hist = document.getElementById('chat-hist');
+  hist.innerHTML += `<div class="chat-u">${q}</div>`;
+  const load = document.createElement('div');
+  load.className = 'chat-a'; load.innerHTML = '<span class="spinner"></span>';
+  hist.appendChild(load);
+  chatH.push({ role: 'user', content: q });
+  try {
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getKey() },
+      body: JSON.stringify({ model: 'gpt-4o', max_tokens: 1200, messages: [{ role: 'system', content: SYS() }, ...chatH] })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    const r = data.choices?.[0]?.message?.content || '';
+    chatH.push({ role: 'assistant', content: r });
+    load.textContent = r;
+  } catch(e) { load.innerHTML = `<span style="color:var(--danger)">Error: ${e.message}</span>`; }
+}
+
+async function genReport(type) {
+  const out = document.getElementById('report-out');
+  const copyBtn = document.getElementById('copy-report');
+  out.innerHTML = '<span class="spinner"></span> Generando...';
+  copyBtn.style.display = 'none';
+  const prompts = {
+    weekly: `Reporte semanal. Por proyecto, por stream (Sprint/stories y PM/burocracia): avances, bloqueos, próximos pasos. Listo para enviar.`,
+    sprint: `Estado del sprint en ambos proyectos. Stories en curso, completadas, bloqueadas. ¿Vamos bien para cerrar?`,
+    exec: `Resumen ejecutivo: 1 párrafo por proyecto. Solo lo esencial para directivos: estado, riesgo principal, si necesita atención.`,
+    risks: `Todos los riesgos y bloqueos activos. Por cada uno: proyecto, descripción, impacto, tiempo abierto, acción pendiente.`,
+    pm: `Todas las tareas PM/burocracia pendientes o en curso. Ordenadas por urgencia. Señala las que llevan más tiempo sin update.`
+  };
+  try {
+    const r = await callAPI(prompts[type]);
+    out.textContent = r;
+    copyBtn.style.display = 'inline-block';
+  } catch(e) { out.innerHTML = `<span style="color:var(--danger)">Error: ${e.message}</span>`; }
+}
+
+function copyEl(id, btnId) {
+  const text = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById(btnId);
+    btn.textContent = 'Copiado'; setTimeout(() => btn.textContent = 'Copiar', 2000);
+  });
+}
+
+function toast(msg) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--accent);color:#0f0f0f;padding:7px 16px;border-radius:4px;font-size:12px;font-family:var(--mono);z-index:9999;font-weight:500';
+  document.body.appendChild(t); setTimeout(() => t.remove(), 1800);
+}
+
+init();
+</script>
+</body>
+</html>
